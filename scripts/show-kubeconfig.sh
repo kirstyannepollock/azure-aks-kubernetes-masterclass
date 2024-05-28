@@ -1,0 +1,1 @@
+cat /home/kpollock/.kube/config
