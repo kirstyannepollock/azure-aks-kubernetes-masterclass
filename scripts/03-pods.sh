@@ -9,10 +9,7 @@ kubectl expose pod my-first-pod --type=LoadBalancer --port=80 --name=my-first-se
 
 echo contacting service...
 sleep 10
+
 URL=$(getK8sServiceUrl my-first-service)
 curl $URL 
 
-echo deleting ...
-kubectl delete pod my-first-pod
-kubectl delete service my-first-service
-sleep 10

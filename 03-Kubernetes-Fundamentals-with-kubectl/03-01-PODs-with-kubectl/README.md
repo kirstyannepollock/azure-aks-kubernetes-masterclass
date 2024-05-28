@@ -167,11 +167,7 @@ kubectl exec -it my-first-pod -- cat /usr/share/nginx/html/index.html
 ## Step-06: Get YAML Output of Pod & Service
 ### Get YAML Output
 ```
-# Get pod definition YAML output
-kubectl get pod my-first-pod -o yaml   
-
-# Get service definition YAML output
-kubectl get service my-first-service -o yaml   
+ 
 ```
 
 ## Step-07: Clean-Up
