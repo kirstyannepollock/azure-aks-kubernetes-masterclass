@@ -62,4 +62,31 @@ if [[ $1 = "history" ]]; then
     kubectl rollout history deployment/$DEPLOYMENT_NAME
     kubectl get replicaset
     kubectl events --for deployment/$DEPLOYMENT_NAME
+
 fi
+
+if [[ $1 = "rollback" ]]; then
+    echo "IMAGE:before "
+    kubectl -ojson get deployment $DEPLOYMENT_NAME | jq -r .spec.template.spec.containers[0].image
+
+    if [[ -z $2 ]]; then
+        kubectl rollout undo deployment/my-first-deployment
+    else
+        kubectl rollout undo deployment/my-first-deployment --to-revision=$2
+    fi
+
+    # DATA=$(kubectl rollout history deployment/$DEPLOYMENT_NAME -o json) # it isnt JSON!
+    # #echo $DATA
+
+    # # awk '{gsub(/} {/,"},{"); print}' <<<"{idea} {item} {intuit}" ## this works
+
+    # #this does not
+    # JSON=$(awk '{gsub(/} {/,"},{"); print}' <<<$DATA)
+    # JSON="[$JSON]"
+    # echo $JSON
+
+    echo "IMAGE: after"
+    kubectl -ojson get deployment $DEPLOYMENT_NAME | jq -r .spec.template.spec.containers[0].image
+fi
+
+# Undo Deployment
