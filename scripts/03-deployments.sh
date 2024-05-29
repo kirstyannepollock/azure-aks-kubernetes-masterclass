@@ -14,12 +14,14 @@ if [[ $1 = "init" ]]; then
 fi
 
 if [[ $1 = "update" ]]; then
-    kubectl set image deployment/$DEPLOYMENT_NAME kubenginx=stacksimplify/kubenginx:2.0.0
+    # NOTE: seems here we must use deployment/$DEPLOYMENT_NAME
+    kubectl set image deployment/$DEPLOYMENT_NAME kubenginx=ghcr.io/stacksimplify/kubenginx:2.0.0
     INFO=$(kubectl -ojson get deployment $DEPLOYMENT_NAME)
     IMAGE=$(jq -r .spec.template.spec.containers[0].image <<<$INFO)
-    echo "IMAGE"
+    echo IMAGE
     echo $IMAGE
-
+    echo ROLLOUT
+    kubectl rollout status deployment/$DEPLOYMENT_NAME
 fi
 
 if [[ $1 = "show" ]]; then
