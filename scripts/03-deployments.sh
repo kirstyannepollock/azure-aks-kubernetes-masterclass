@@ -1,8 +1,6 @@
 source $(dirname "$0")/set-credentials.sh
 source $(dirname "$0")/get-k8s-service-url.sh
 
-#DEPLOYMENT_FILE="../../azure-aks-kubernetes-masterclass/03-Kubernetes-Fundamentals-with-kubectl/03-02-ReplicaSets-with-kubectl/replicaset-demo.yml"
-
 DEPLOYMENT_NAME=my-first-deployment
 SERVICE_NAME=$DEPLOYMENT_NAME-service
 
@@ -14,22 +12,32 @@ if [[ $1 = "init" ]]; then
 fi
 
 if [[ $1 = "update" ]]; then
+    if [[ -z $2 ]]; then
+        MAJ_VER=1
+    else
+        MAJ_VER=$2
+    fi
+    echo using image - ghcr.io/stacksimplify/kubenginx:$MAJ_VER.0.0
     # NOTE: seems here we must use deployment/$DEPLOYMENT_NAME
-    kubectl set image deployment/$DEPLOYMENT_NAME kubenginx=ghcr.io/stacksimplify/kubenginx:2.0.0
+    kubectl set image deployment/$DEPLOYMENT_NAME kubenginx=ghcr.io/stacksimplify/kubenginx:$MAJ_VER.0.0
     INFO=$(kubectl -ojson get deployment $DEPLOYMENT_NAME)
     IMAGE=$(jq -r .spec.template.spec.containers[0].image <<<$INFO)
     echo IMAGE
     echo $IMAGE
     echo ROLLOUT
     kubectl rollout status deployment/$DEPLOYMENT_NAME
+    echo EVENTS
+    kubectl events --for deployment/$DEPLOYMENT_NAME
+    echo REPLICASET
+    kubectl get deployment $DEPLOYMENT_NAME
 fi
 
 if [[ $1 = "show" ]]; then
     kubectl get services
-    kubectl get deployments
+    kubectl get deployment $DEPLOYMENT_NAME
     echo "IMAGE"
     kubectl -ojson get deployment $DEPLOYMENT_NAME | jq -r .spec.template.spec.containers[0].image
-    kubectl get replicaset
+    #kubectl describe deployment $DEPLOYMENT_NAME
     kubectl get pods -o wide
 fi
 
@@ -48,4 +56,10 @@ fi
 if [[ $1 = "delete" ]]; then
     kubectl delete deployment $DEPLOYMENT_NAME
     kubectl delete service $SERVICE_NAME
+fi
+
+if [[ $1 = "history" ]]; then
+    kubectl rollout history deployment/$DEPLOYMENT_NAME
+    kubectl get replicaset
+    kubectl events --for deployment/$DEPLOYMENT_NAME
 fi
