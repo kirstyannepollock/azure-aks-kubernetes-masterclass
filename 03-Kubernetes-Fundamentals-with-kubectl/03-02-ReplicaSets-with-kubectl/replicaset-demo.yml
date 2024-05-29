@@ -5,7 +5,7 @@ metadata:
   labels:
     app: my-helloworld
 spec:
-  replicas: 6
+  replicas: 3
   selector:
     matchLabels:
       app: my-helloworld
@@ -16,4 +16,4 @@ spec:
     spec:
       containers:
       - name: my-helloworld-app
-        image: stacksimplify/kube-helloworld:1.0.0
+        image: ghcr.io/stacksimplify/kube-helloworld:1.0.0

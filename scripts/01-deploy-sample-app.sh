@@ -1,4 +1,5 @@
 source $(dirname "$0")/set-credentials.sh
+source $(dirname "$0")/get-k8s-service-url.sh
 
 # Deploy Application
 kubectl apply -f ../../azure-aks-kubernetes-masterclass/01-Create-AKS-Cluster/kube-manifests/
@@ -9,14 +10,9 @@ kubectl get pods
 # # Verify Deployment
 kubectl get deployment
 
-# Verify Service (Make a note of external ip)
-kubectl get service
+echo contacting service...
+sleep 10
 
-# DATA=$(kubectl get service -o json)
-# echo $DATA
-# # !!!!! too much faff for now
+URL=$(getK8sServiceUrl myapp1-loadbalancer)
+curl $URL 
 
-# Access Application
-#curl http://4.182.108.161
-
-#http://<External-IP-from-get-service-output>
