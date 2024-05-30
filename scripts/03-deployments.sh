@@ -89,4 +89,23 @@ if [[ $1 = "rollback" ]]; then
     kubectl -ojson get deployment $DEPLOYMENT_NAME | jq -r .spec.template.spec.containers[0].image
 fi
 
-# Undo Deployment
+if [[ $1 = "pause" ]]; then
+    kubectl rollout pause deployment/$DEPLOYMENT_NAME
+    kubectl set image deployment/$DEPLOYMENT_NAME kubenginx=ghcr.io/stacksimplify/kubenginx:4.0.0
+
+    # Check the Rollout History of a Deployment
+    kubectl rollout history deployment/$DEPLOYMENT_NAME
+    #Observation: No new rollout should start, we should see same number of versions as we check earlier with last version number matches which we have noted earlier.
+
+    kubectl get rs
+    #Observation: No new replicaSet created. We should have same number of replicaSets as earlier when we took note.
+
+    # Make one more change: set limits to our container
+    kubectl set resources deployment/$DEPLOYMENT_NAME -c=kubenginx --limits=cpu=20m,memory=30Mi
+
+    # Resume the Deployment
+    kubectl rollout resume deployment/$DEPLOYMENT_NAME
+
+    kubectl rollout history deployment/$DEPLOYMENT_NAME
+
+fi
