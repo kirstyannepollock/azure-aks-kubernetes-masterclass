@@ -1,0 +1,21 @@
+[
+    {
+        "type": "ClusterIP",
+        "deploymentName": "my-backend-rest-app",
+        "imageName": "ghcr.io/stacksimplify/kube-helloworld",
+        "imageVersion": "1.0.0",
+        "port": "8080",
+        "targetPort": "8080",
+        "serviceName": "my-backend-service"
+    },
+    {
+        "type": "LoadBalancer",
+        "deploymentName": "my-frontend-nginx-app",
+        "imageName": "ghcr.io/stacksimplify/kube-frontend-nginx",
+        "imageVersion": "1.0.0",
+        "port": "80",
+        "targetPort": "80",
+        "serviceName": "my-frontend-service",
+        "healthCheckEndpoint": "hello"
+    }
+]

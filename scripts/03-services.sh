@@ -10,7 +10,93 @@ IMAGE_NAME_FRONTEND=ghcr.io/stacksimplify/kube-frontend-nginx:1.0.0
 DEPLOYMENT_NAME_FRONTEND=my-frontend-nginx-app
 SERVICE_NAME_FRONTEND=my-frontend-service
 
+if [[ $1 = "apply" ]]; then
+    if [[ -z $2 ]]; then
+        echo must supply config!
+        exit 1
+    fi
+
+    CONFIGS=$(jq -r '' $2)
+
+    # Get the length of the list:
+    LENGTH=$(echo $CONFIGS | jq length)
+
+    # Iterate through to store the names:
+    for ((i = 0; i < $LENGTH; ++i)); do
+        CONFIG=$(jq -r ".[$i]" <<<$CONFIGS)
+
+        TYPE=$(jq -r .type <<<$CONFIG)
+        DEPLOYMENT_NAME=$(jq -r .deploymentName <<<$CONFIG)
+        IMAGE_NAME=$(jq -r .imageName <<<$CONFIG)
+        IMAGE_VERSION=$(jq -r .imageVersion <<<$CONFIG)
+        PORT=$(jq -r .port <<<$CONFIG)
+        TARGET_PORT=$(jq -r .targetPort <<<$CONFIG)
+        SERVICE_NAME=$(jq -r .serviceName <<<$CONFIG)
+
+        echo creating "$TYPE $DEPLOYMENT_NAME as $SERVICE_NAME using $IMAGE_NAME:$IMAGE_VERSION $PORT:$TARGET_PORT..."
+
+        kubectl create deployment $DEPLOYMENT_NAME --image=$IMAGE_NAME:$IMAGE_VERSION
+        kubectl expose deployment $DEPLOYMENT_NAME --type=$TYPE --port=$PORT --target-port=$TARGET_PORT --name=$SERVICE_NAME
+
+        if [[ $TYPE = "loadBalancer" ]]; then
+            echo front end URL: "$(getK8sServiceUrl $SERVICE_NAME)"
+        fi
+    done
+
+    kubectl get services
+    kubectl get pods -o wide
+fi
+
+if [[ $1 = "destroy" ]]; then
+    if [[ -z $2 ]]; then
+        echo must supply config!
+        exit 1
+    fi
+
+    CONFIGS=$(jq -r '' $2)
+
+    # Get the length of the list:
+    LENGTH=$(echo $CONFIGS | jq length)
+
+    # Iterate through to store the names:
+    for ((i = 0; i < $LENGTH; ++i)); do
+        CONFIG=$(jq -r ".[$i]" <<<$CONFIGS)
+        DEPLOYMENT_NAME=$(jq -r .deploymentName <<<$CONFIG)
+        SERVICE_NAME=$(jq -r .serviceName <<<$CONFIG)
+
+        echo destroying $DEPLOYMENT_NAME as $SERVICE_NAME
+        kubectl delete deployment $DEPLOYMENT_NAME
+        kubectl delete service $SERVICE_NAME
+    done
+fi
+
+if [[ $1 = "show-all" ]]; then
+    if [[ -z $2 ]]; then
+        echo must supply config!
+        exit 1
+    fi
+
+    CONFIGS=$(jq -r '' $2)
+
+    # Get the length of the list:
+    LENGTH=$(echo $CONFIGS | jq length)
+
+    # Iterate through to store the names:
+    for ((i = 0; i < $LENGTH; ++i)); do
+        CONFIG=$(jq -r ".[$i]" <<<$CONFIGS)
+        DEPLOYMENT_NAME=$(jq -r .deploymentName <<<$CONFIG)
+        SERVICE_NAME=$(jq -r .serviceName <<<$CONFIG)
+
+        kubectl get service $SERVICE_NAME
+        kubectl get deployment $DEPLOYMENT_NAME
+        echo "IMAGE"
+        kubectl -ojson get deployment $DEPLOYMENT_NAME | jq -r .spec.template.spec.containers[0].image
+        kubectl get pods -o wide
+    done
+fi
+
 if [[ $1 = "init" ]]; then
+
     echo creating backend ...
     kubectl create deployment $DEPLOYMENT_NAME_BACKEND --image=$IMAGE_NAME_BACKEND
     kubectl expose deployment $DEPLOYMENT_NAME_BACKEND --type=ClusterIP --port=8080 --target-port=8080 --name=$SERVICE_NAME_BACKEND
