@@ -13,3 +13,5 @@
 *.tfstate
 *.tfstate.backup
 *.tfvars
+/scripts/json
+/scripts/json/*.json
