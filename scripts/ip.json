@@ -1,0 +1,60 @@
+[
+  {
+    "ddosSettings": {
+      "protectionMode": "VirtualNetworkInherited"
+    },
+    "etag": "W/\"5717a77b-146f-4cd5-9403-a4853a94a48c\"",
+    "id": "/subscriptions/3cdb2ccd-d0b0-476e-a5a6-19a32c63fe8b/resourceGroups/MC_aks-rg-1_aksdemo1_germanywestcentral/providers/Microsoft.Network/publicIPAddresses/fb66fefe-479c-4321-b905-ae50146441ec",
+    "idleTimeoutInMinutes": 4,
+    "ipAddress": "4.182.84.218",
+    "ipConfiguration": {
+      "id": "/subscriptions/3cdb2ccd-d0b0-476e-a5a6-19a32c63fe8b/resourceGroups/MC_aks-rg-1_aksdemo1_germanywestcentral/providers/Microsoft.Network/loadBalancers/kubernetes/frontendIPConfigurations/fb66fefe-479c-4321-b905-ae50146441ec",
+      "resourceGroup": "MC_aks-rg-1_aksdemo1_germanywestcentral"
+    },
+    "ipTags": [],
+    "location": "germanywestcentral",
+    "name": "fb66fefe-479c-4321-b905-ae50146441ec",
+    "provisioningState": "Succeeded",
+    "publicIPAddressVersion": "IPv4",
+    "publicIPAllocationMethod": "Static",
+    "resourceGroup": "MC_aks-rg-1_aksdemo1_germanywestcentral",
+    "resourceGuid": "0dc4121e-978f-4c94-abdb-aca3296cd077",
+    "sku": {
+      "name": "Standard",
+      "tier": "Regional"
+    },
+    "tags": {
+      "aks-managed-cluster-name": "aksdemo1",
+      "aks-managed-cluster-rg": "aks-rg-1",
+      "aks-managed-type": "aks-slb-managed-outbound-ip"
+    },
+    "type": "Microsoft.Network/publicIPAddresses",
+    "zones": [
+      "2",
+      "3",
+      "1"
+    ]
+  },
+  {
+    "ddosSettings": {
+      "protectionMode": "VirtualNetworkInherited"
+    },
+    "etag": "W/\"42d83c17-7e2c-4492-9791-b4d35f43a519\"",
+    "id": "/subscriptions/3cdb2ccd-d0b0-476e-a5a6-19a32c63fe8b/resourceGroups/MC_aks-rg-1_aksdemo1_germanywestcentral/providers/Microsoft.Network/publicIPAddresses/myAKSPublicIPForIngress",
+    "idleTimeoutInMinutes": 4,
+    "ipAddress": "4.185.148.233",
+    "ipTags": [],
+    "location": "germanywestcentral",
+    "name": "myAKSPublicIPForIngress",
+    "provisioningState": "Succeeded",
+    "publicIPAddressVersion": "IPv4",
+    "publicIPAllocationMethod": "Static",
+    "resourceGroup": "MC_aks-rg-1_aksdemo1_germanywestcentral",
+    "resourceGuid": "77b24200-3e49-4e28-ad34-0e188619dd2b",
+    "sku": {
+      "name": "Standard",
+      "tier": "Regional"
+    },
+    "type": "Microsoft.Network/publicIPAddresses"
+  }
+]
