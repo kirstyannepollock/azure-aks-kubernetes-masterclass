@@ -1,0 +1,84 @@
+# BACKEND
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-app
+  labels:
+    app: backend-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-app
+  template:
+    metadata:
+      labels:
+        app: backend-app
+    spec:
+      containers:
+      - name: backend-app
+        image: ghcr.io/stacksimplify/kube-helloworld:1.0.0
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080
+
+---    
+# lb
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-backend-service ## VERY VERY IMPORTANT - NGINX PROXYPASS needs this name
+spec:
+  selector:
+    app: backend-app
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# FRONTEND
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-nginxapp
+  labels:
+    app: frontend-nginxapp
+spec:
+  selector:
+    matchLabels:
+      app: frontend-nginxapp
+  template:
+    metadata:
+      labels:
+        app: frontend-nginxapp
+    spec:
+      containers:
+      - name: frontend-nginxapp
+        image: ghcr.io/stacksimplify/kube-frontend-nginx:1.0.0
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
+
+
+---    
+# lb
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-frontend-service
+spec:
+  selector:
+    app: frontend-nginxapp
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer
+  
