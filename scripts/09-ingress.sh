@@ -26,15 +26,25 @@ case $COMMAND in
     echo $IP_ADDRESS
     ;;
 "delete")
-    az network public-ip delete --resource-group $MC_RG --name $IP_NAME
-    az network public-ip show --resource-group $MC_RG --name $IP_NAME
-    kubectl delete pods --all
-    kubectl delete services --all
-    kubectl delete ingress --all
+    # kubectl delete pods --all
+    # kubectl delete services --all --namespace $INGRESS_NAMESPACE
+    # kubectl delete ingress --all
+
+    if [[ -z $2 ]]; then
+        DIR_NAME=../09-Ingress-Basic/kube-manifests
+    else
+        DIR_NAME=$2
+    fi
+    kubectl delete -f $DIR_NAME/
+
     helm uninstall ingress-nginx ingress-nginx/ingress-nginx \
         --namespace $INGRESS_NAMESPACE
     helm repo remove ingress-nginx https://kubernetes.github.io/ingress-nginx
     kubectl delete namespace -n $INGRESS_NAMESPACE
+
+    az network public-ip delete --resource-group $MC_RG --name $IP_NAME
+    az network public-ip show --resource-group $MC_RG --name $IP_NAME
+
     ;;
 "show")
     IP_ADDRESS=$(getIPAddress)
@@ -50,6 +60,11 @@ case $COMMAND in
     echo NAMESPACE DETAILS
     echo =================
     kubectl get all -n $INGRESS_NAMESPACE
+
+    echo
+    echo ALL
+    echo ====
+    kubectl get all
     ;;
 "install-controller")
     REPLICA_COUNT=2
@@ -60,8 +75,6 @@ case $COMMAND in
     helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
     he HEALTH_CHECK_ENDPOINT=$2
     lm repo update
-    helm uninstall ingress-nginx ingress-nginx/ingress-nginx \
-        --namespace $INGRESS_NAMESPACE
 
     STATIC_IP=$(getIPAddress)
     helm install ingress-nginx ingress-nginx/ingress-nginx \
@@ -77,7 +90,7 @@ case $COMMAND in
     SERVICE_NAME=ingress-nginx-controller
     URL=$(getK8sServiceUrl $SERVICE_NAME $INGRESS_NAMESPACE)
     echo $URL
-    HC="$URL/$HEALTH_CHECK_ENDPOINT"
+    HC="$URL/$HEALTH_CHECK_ENDPOINT" ##  /app1/index.html
     echo contacting $SERVICE_NAME on $HC ...
     curl $HC
     echo
