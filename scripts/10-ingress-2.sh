@@ -83,7 +83,7 @@ case $COMMAND in
     SERVICE_NAME=ingress-nginx-controller
     URL=$(getK8sServiceUrl $SERVICE_NAME $INGRESS_NAMESPACE)
 
-    for APP in app1 app2 ""; do
+    for APP in app1 app2; do
         echo contacting app $APP
         curl $URL/$APP/index.html
         echo
