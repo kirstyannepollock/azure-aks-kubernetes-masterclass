@@ -1,10 +1,13 @@
+COMMANDS="apply delete show check"
+
 if [[ -z $1 ]]; then
     echo must supply YAML config!
     exit 1
 fi
 
-if [[ -z $2 ]]; then
-    echo "must supply command [apply, delete, show, check] !"
+COMMAND=$2
+if [[ -z $COMMAND ]]; then
+    echo "must supply command [ $COMMANDS ] !"
     exit 1
 fi
 
@@ -17,10 +20,7 @@ FRONTEND_DEPLOYMENT_NAME=frontend-nginxapp
 
 source $(dirname "$0")/set-credentials.sh
 source $(dirname "$0")/get-k8s-service-url.sh
-
-function jsonArrayToTable() {
-    jq -r '(.[0] | ([keys[] | .] |(., map(length*"-")))), (.[] | ([keys[] as $k | .[$k]])) | @tsv' | column -t -s $'\t'
-}
+source $(dirname "$0")/json-array-to-table.sh
 
 case $COMMAND in
 "apply")
@@ -71,7 +71,10 @@ case $COMMAND in
     kubeconform -summary -output json $YAML_FILE
     ;;
 \?)
-    echo "Invalid command. Use one of [apply, delete, show, check] " >&2
+    echo "Use one of [ $COMMANDS ] " >&2
+    ;;
+*)
+    echo "Invalid command $COMMAND. Use one of [ $COMMANDS ] " >&2
     exit 1
     ;;
 esac

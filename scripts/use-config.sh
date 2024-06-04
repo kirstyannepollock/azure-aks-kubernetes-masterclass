@@ -1,15 +1,16 @@
-if [[ -z $1 ]]; then
+COMMANDS="apply destroy show check"
+CONFIG_FILE=$1
+
+if [[ -z $CONFIG_FILE ]]; then
     echo must supply JSON config!
     exit 1
 fi
 
-if [[ -z $2 ]]; then
-    echo "must supply command [apply, destroy, show, check] !"
+COMMAND=$2
+if [[ -z $COMMAND ]]; then
+    echo "must supply command [ $COMMANDS ] !"
     exit 1
 fi
-
-COMMAND=$2
-CONFIG_FILE=$1
 
 source $(dirname "$0")/set-credentials.sh
 source $(dirname "$0")/get-k8s-service-url.sh
@@ -93,7 +94,10 @@ case $COMMAND in
     kubectl get pods -o wide
     ;;
 \?)
-    echo "Invalid command. Use one of [apply, destroy, show, check] " >&2
+    echo "Use <yaml-file-name> and one of [ $COMMANDS ] " >&2
+    ;;
+*)
+    echo "Invalid command $COMMAND. Use one of [ $COMMANDS ] " >&2
     exit 1
     ;;
 esac
