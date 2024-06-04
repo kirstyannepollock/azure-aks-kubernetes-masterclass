@@ -14,7 +14,7 @@ kubectl get ValidatingWebhookConfiguration aks-node-validating-webhook -o yaml |
 
 case $COMMAND in
 "show")
-    # todo, loop and repmove all
+    # todo, loop and remove all
     kubectl get nodes -o json | jq '.items | flatten | map({taints: .spec.taints, node: .metadata.name}) '
     ;;
 "remove")
@@ -22,6 +22,9 @@ case $COMMAND in
     kubectl get nodes -o json | jq '.items | flatten | map({taints: .spec.taints, node: .metadata.name}) '
     ;;
 \?)
+    echo "Use one of [show, fix]"
+    ;;
+*)
     echo "Invalid command. Use one of [show, fix]" >&2
     exit 1
     ;;
