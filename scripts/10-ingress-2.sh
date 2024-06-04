@@ -1,4 +1,4 @@
-COMMANDS="create delete show install-controller contact apply-manifests"
+COMMANDS="create-public-ip apply-manifests create-controller show contact delete"
 COMMAND=$1
 
 if [[ -z $COMMAND ]]; then
@@ -17,53 +17,13 @@ IP_NAME=myAKSPublicIPForIngress
 INGRESS_NAMESPACE=ingress-basic
 
 case $COMMAND in
-"create")
+"create-public-ip")
     IP_ADDRESS=$(az network public-ip create --resource-group $MC_RG --name $IP_NAME --sku Standard --allocation-method static --query publicIp.ipAddress -o tsv)
 
     echo
     echo IP ADDRESS
     echo =============
     echo $IP_ADDRESS
-    ;;
-"delete")
-    # kubectl delete pods --all
-    # kubectl delete services --all --namespace $INGRESS_NAMESPACE
-    # kubectl delete ingress --all
-
-    if [[ -z $2 ]]; then
-        DIR_NAME=../09-Ingress-Basic/kube-manifests
-    else
-        DIR_NAME=$2
-    fi
-    kubectl delete -f $DIR_NAME/
-
-    helm uninstall ingress-nginx ingress-nginx/ingress-nginx \
-        --namespace $INGRESS_NAMESPACE
-    helm repo remove ingress-nginx https://kubernetes.github.io/ingress-nginx
-
-    az network public-ip delete --resource-group $MC_RG --name $IP_NAME
-    az network public-ip show --resource-group $MC_RG --name $IP_NAME
-    kubectl delete namespace $INGRESS_NAMESPACE
-    ;;
-"show")
-    IP_ADDRESS=$(getIPAddress)
-    echo STATIC IP ADDRESS
-    echo =================
-    echo $IP_ADDRESS
-    echo
-    echo STATIC IP ADDRESS DETAILS
-    echo =========================
-    az network public-ip show --resource-group $MC_RG --name $IP_NAME
-
-    echo
-    echo NAMESPACE DETAILS
-    echo =================
-    kubectl get all -n $INGRESS_NAMESPACE
-
-    echo
-    echo ALL
-    echo ====
-    kubectl get all
     ;;
 "install-controller")
     REPLICA_COUNT=2
@@ -83,6 +43,41 @@ case $COMMAND in
         --set controller.service.externalTrafficPolicy=Local \
         --set controller.service.loadBalancerIP="$STATIC_IP"
     ;;
+"apply-manifests")
+    if [[ -z $2 ]]; then
+        DIR_NAME=../10-Ingress-Context-Path-Based-Routing/kube-manifests
+    else
+        DIR_NAME=$2
+    fi
+    kubectl apply -R -f $DIR_NAME/
+    ;;
+"delete")
+    if [[ -z $2 ]]; then
+        DIR_NAME=../10-Ingress-Context-Path-Based-Routing/kube-manifests
+    else
+        DIR_NAME=$2
+    fi
+    kubectl delete -R -f $DIR_NAME/
+    helm uninstall ingress-nginx ingress-nginx/ingress-nginx \
+        --namespace $INGRESS_NAMESPACE
+    helm repo remove ingress-nginx https://kubernetes.github.io/ingress-nginx
+
+    az network public-ip delete --resource-group $MC_RG --name $IP_NAME
+    az network public-ip show --resource-group $MC_RG --name $IP_NAME
+    kubectl delete namespace $INGRESS_NAMESPACE
+    ;;
+"show")
+    kubectl get pods
+    kubectl get services
+    kubectl get ingress
+    kubectl get pods -n $INGRESS_NAMESPACE
+    PODS=$(kubectl get pods -n ingress-basic -o json | jq '.items | flatten | map({name: .metadata.name})')
+
+    jq -r '.[]|[.name] | @tsv' <<<$PODS | while IFS=$'\t' read -r name; do
+        echo POD: $name
+        kubectl logs $name -n $INGRESS_NAMESPACE
+    done
+    ;;
 "contact")
     HEALTH_CHECK_ENDPOINT=$2
     SERVICE_NAME=ingress-nginx-controller
@@ -93,16 +88,7 @@ case $COMMAND in
     curl $HC
     echo
     ;;
-"apply-manifests")
-    if [[ -z $2 ]]; then
-        DIR_NAME=../09-Ingress-Basic/kube-manifests
-    else
-        DIR_NAME=$2
-    fi
-    kubectl apply -f $DIR_NAME/
-    kubectl get services
-    kubectl get ingress
-    ;;
+
 \?)
     echo "Use one of [ $COMMANDS ] " >&2
     ;;
