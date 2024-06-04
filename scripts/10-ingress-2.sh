@@ -82,11 +82,19 @@ case $COMMAND in
     HEALTH_CHECK_ENDPOINT=$2
     SERVICE_NAME=ingress-nginx-controller
     URL=$(getK8sServiceUrl $SERVICE_NAME $INGRESS_NAMESPACE)
-    echo $URL
-    HC="$URL/$HEALTH_CHECK_ENDPOINT" ##  /app1/index.html
-    echo contacting $SERVICE_NAME on $HC ...
-    curl $HC
+
+    for APP in app1 app2 ""; do
+        echo contacting app $APP
+        curl $URL/$APP/index.html
+        echo
+    done
+
     echo
+    echo ====================================================
+    echo Now go to $URL and login
+    echo ====================================================
+    echo Username: admin101
+    echo Password: password101
     ;;
 
 \?)
