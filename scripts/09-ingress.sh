@@ -13,8 +13,6 @@ function getIPAddress() {
 }
 
 MC_RG=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query nodeResourceGroup -o tsv)
-IP_NAME=myAKSPublicIPForIngress
-INGRESS_NAMESPACE=ingress-basic
 
 case $COMMAND in
 "create")

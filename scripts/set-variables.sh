@@ -1,3 +1,5 @@
 SUBSCRIPTION_NAME=Learning
 RESOURCE_GROUP=aks-rg-1
 AKS_CLUSTER_NAME=aksdemo1
+IP_NAME=myAKSPublicIPForIngress
+INGRESS_NAMESPACE=ingress-basic

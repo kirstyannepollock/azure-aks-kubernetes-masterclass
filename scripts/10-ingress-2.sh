@@ -1,4 +1,4 @@
-COMMANDS="create-public-ip apply-manifests create-controller show contact delete"
+COMMANDS="create-public-ip install-controller apply-manifests show contact delete"
 COMMAND=$1
 
 if [[ -z $COMMAND ]]; then
@@ -13,8 +13,6 @@ function getIPAddress() {
 }
 
 MC_RG=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query nodeResourceGroup -o tsv)
-IP_NAME=myAKSPublicIPForIngress
-INGRESS_NAMESPACE=ingress-basic
 
 case $COMMAND in
 "create-public-ip")
@@ -28,20 +26,34 @@ case $COMMAND in
 "install-controller")
     REPLICA_COUNT=2
     # Create a namespace for your ingress resources
+    echo creating namespace $INGRESS_NAMESPACE ...
     kubectl create namespace $INGRESS_NAMESPACE
 
+    echo
+    echo adding Helm repo for ingress-nginx...
     # Add the official stable repository
     helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
     helm repo update
 
     STATIC_IP=$(getIPAddress)
-    helm install ingress-nginx ingress-nginx/ingress-nginx \
+
+    echo
+    echo installing $REPLICA_COUNT replicas of ingress-nginx on $STATIC_IP ns=$INGRESS_NAMESPACE...
+
+    # # Azure AKS won't work without "controller.service.externalTrafficPolicy=Local"
+    helm upgrade \
+        --install ingress-nginx ingress-nginx/ingress-nginx \
         --namespace $INGRESS_NAMESPACE \
         --set controller.replicaCount=$REPLICA_COUNT \
         --set controller.nodeSelector."kubernetes\.io/os"=linux \
         --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux \
         --set controller.service.externalTrafficPolicy=Local \
         --set controller.service.loadBalancerIP="$STATIC_IP"
+
+    # alt but would need full YAML to tweak those abpove values I assume
+    # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+
+    # kubectl get service -l app.kubernetes.io/name=ingress-nginx --namespace $INGRESS_NAMESPACE
     ;;
 "apply-manifests")
     if [[ -z $2 ]]; then
