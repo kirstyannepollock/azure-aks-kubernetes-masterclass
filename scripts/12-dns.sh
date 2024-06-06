@@ -29,6 +29,16 @@ function buildAzureJson() {
         userAssignedIdentityID=$UAII)
 }
 case $COMMAND in
+"assign-to-aks")
+    # az aks update --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --enable-managed-identity
+    # az aks nodepool upgrade --resource-group $RESOURCE_GROUP --cluster-name $AKS_CLUSTER_NAME --name agentpool --node-image-only
+   az aks update \
+    --resource-group myResourceGroup \
+    --name myManagedCluster \
+    --enable-managed-identity \
+    --assign-identity <identity-resource-id> 5
+   
+    ;;
 "build-json")
     buildAzureJson $(getUAII) $RESOURCE_GROUP
     ;;
@@ -42,11 +52,14 @@ case $COMMAND in
     SCOPE="/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RG_DNS_ZONES"
     echo creating role assigment for $UAII with scope $SCOPE
 
-    ROLE_ASSIGNMENT=$(az role assignment create \
-        --assignee-object-id $UAII \
-        --assignee-principal-type ServicePrincipal \
-        --role Contributor \
-        --scope $SCOPE) #/providers/Microsoft.Compute/virtualMachines/MyVm
+    # MS say to use assignee-principal-type ServicePrincipal for MSI
+    ROLE_ASSIGNMENT=$(
+        az role assignment create \
+            --assignee-object-id $UAII \
+            --assignee-principal-type ServicePrincipal \
+            --role Contributor \
+            --scope $SCOPE
+    )
     echo $ROLE_ASSIGNMENT
     ;;
 "delete")
