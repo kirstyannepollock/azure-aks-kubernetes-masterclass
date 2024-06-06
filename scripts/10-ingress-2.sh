@@ -1,4 +1,4 @@
-COMMANDS="create-public-ip install-controller apply-manifests show contact delete"
+COMMANDS="create-public-ip install-ingress-controller apply-manifests show contact delete"
 COMMAND=$1
 
 if [[ -z $COMMAND ]]; then
@@ -8,7 +8,7 @@ fi
 
 source $(dirname "$0")/set-credentials.sh
 source $(dirname "$0")/get-k8s-service-url.sh
-function getIPAddress() {
+function getPublicIpAddress() {
     az network public-ip list | jq -r --arg NAME "$IP_NAME" '.[] | select(.name == $NAME) | .ipAddress'
 }
 
@@ -23,8 +23,13 @@ case $COMMAND in
     echo =============
     echo $IP_ADDRESS
     ;;
-"install-controller")
-    REPLICA_COUNT=2
+"install-ingress-controller")
+    if [[ -z $2 ]]; then
+        REPLICA_COUNT=2
+    else
+        REPLICA_COUNT=$2
+    fi
+
     # Create a namespace for your ingress resources
     echo creating namespace $INGRESS_NAMESPACE ...
     kubectl create namespace $INGRESS_NAMESPACE
@@ -35,14 +40,13 @@ case $COMMAND in
     helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
     helm repo update
 
-    STATIC_IP=$(getIPAddress)
+    STATIC_IP=$(getPublicIpAddress)
 
     echo
     echo installing $REPLICA_COUNT replicas of ingress-nginx on $STATIC_IP ns=$INGRESS_NAMESPACE...
 
     # # Azure AKS won't work without "controller.service.externalTrafficPolicy=Local"
-    helm upgrade \
-        --install ingress-nginx ingress-nginx/ingress-nginx \
+    helm install ingress-nginx ingress-nginx/ingress-nginx \
         --namespace $INGRESS_NAMESPACE \
         --set controller.replicaCount=$REPLICA_COUNT \
         --set controller.nodeSelector."kubernetes\.io/os"=linux \
@@ -53,7 +57,11 @@ case $COMMAND in
     # alt but would need full YAML to tweak those abpove values I assume
     # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
 
-    # kubectl get service -l app.kubernetes.io/name=ingress-nginx --namespace $INGRESS_NAMESPACE
+    echo =================================================
+    echo "*** If this operation failed, check taints! ***"
+    echo =================================================
+
+    kubectl get service -l app.kubernetes.io/name=ingress-nginx --namespace $INGRESS_NAMESPACE
     ;;
 "apply-manifests")
     if [[ -z $2 ]]; then
@@ -79,16 +87,22 @@ case $COMMAND in
     kubectl delete namespace $INGRESS_NAMESPACE
     ;;
 "show")
-    kubectl get pods
-    kubectl get services
-    kubectl get ingress
-    kubectl get pods -n $INGRESS_NAMESPACE
-    PODS=$(kubectl get pods -n ingress-basic -o json | jq '.items | flatten | map({name: .metadata.name})')
+    kubectl get all -n $INGRESS_NAMESPACE
 
-    jq -r '.[]|[.name] | @tsv' <<<$PODS | while IFS=$'\t' read -r name; do
-        echo POD: $name
-        kubectl logs $name -n $INGRESS_NAMESPACE
-    done
+    if [[ "pod-logs" == $2 ]]; then
+
+        PODS=$(kubectl get pods -n $INGRESS_NAMESPACE -o json | jq '.items | flatten | map({name: .metadata.name})')
+
+        jq -r '.[]|[.name] | @tsv' <<<$PODS | while IFS=$'\t' read -r name; do
+            echo
+            echo ==============================================
+            echo POD: $name
+            echo ==============================================
+
+            kubectl logs $name -n $INGRESS_NAMESPACE
+        done
+
+    fi
     ;;
 "contact")
     HEALTH_CHECK_ENDPOINT=$2
@@ -96,9 +110,12 @@ case $COMMAND in
     URL=$(getK8sServiceUrl $SERVICE_NAME $INGRESS_NAMESPACE)
 
     for APP in app1 app2; do
-        echo contacting app $APP
-        curl $URL/$APP/index.html
         echo
+        echo ==============================================
+        echo contacting app $APP ...
+        echo ==============================================
+
+        curl $URL/$APP/index.html
     done
 
     echo

@@ -8,7 +8,7 @@ fi
 
 source $(dirname "$0")/set-credentials.sh
 source $(dirname "$0")/get-k8s-service-url.sh
-function getIPAddress() {
+function getPublicIpAddress() {
     az network public-ip list | jq -r --arg NAME "$IP_NAME" '.[] | select(.name == $NAME) | .ipAddress'
 }
 
@@ -44,7 +44,7 @@ case $COMMAND in
     kubectl delete namespace $INGRESS_NAMESPACE
     ;;
 "show")
-    IP_ADDRESS=$(getIPAddress)
+    IP_ADDRESS=$(getPublicIpAddress)
     echo STATIC IP ADDRESS
     echo =================
     echo $IP_ADDRESS
@@ -72,7 +72,7 @@ case $COMMAND in
     helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
     helm repo update
 
-    STATIC_IP=$(getIPAddress)
+    STATIC_IP=$(getPublicIpAddress)
     helm install ingress-nginx ingress-nginx/ingress-nginx \
         --namespace $INGRESS_NAMESPACE \
         --set controller.replicaCount=$REPLICA_COUNT \
